@@ -1,42 +1,69 @@
 'use client';
 
-import { useState, useMemo, use } from 'react';
+import { useState, useEffect, use, useMemo } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
-// Mock DB, later we fetch from Supabase
-const DUMMY_ORDERS = [
-  { id: '101951650', akt: '120000799407', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:00', qty: 1, type: 'yangi' },
-  { id: '101951651', akt: '120000799407', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:02', qty: 1, type: 'yangi' },
-  { id: '101951652', akt: '120000799408', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:05', qty: 1, type: 'eski' },
-  { id: '101912514', akt: '120000799407', sku: 'UAKEENA-UAKEENMIKSER001-АЛЫЙ', sellerItemCode: '', title: 'UAKEEN ZL-2303 800W Qo‘l Mikseri', date: '2024-04-14 09:10', qty: 1, type: 'yangi' },
-  { id: '101912515', akt: '120000799408', sku: 'UAKEENA-UAKEENMIKSER001-АЛЫЙ', sellerItemCode: '', title: 'UAKEEN ZL-2303 800W Qo‘l Mikseri', date: '2024-04-14 09:12', qty: 1, type: 'yangi' },
-  { id: '101912516', akt: '120000799409', sku: 'BEAUTY-CREAM-001', sellerItemCode: 'BC-101', title: 'Yuz uchun oqartiruvchi krem', date: '2024-04-13 18:00', qty: 2, type: 'yangi' }
-];
+interface Order {
+  id: string; // Database uuid
+  akt: string;
+  order_id: string;
+  shop_name: string;
+  sku: string;
+  seller_item_code: string;
+  title: string;
+  qty: number;
+  type: string; // 'yangi' or 'eski'
+  created_at: string;
+}
 
 export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: string }> }) {
   const [activeTab, setActiveTab] = useState<'yangi' | 'eski'>('yangi');
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const resolvedParams = use(params);
+  
+  // Format shop name: "zunitech-yandex" -> "Zunitech Yandex"
   const shopName = resolvedParams.shopId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
+  useEffect(() => {
+    async function fetchOrders() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('shop_name', resolvedParams.shopId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Baza xatosi:', error);
+      } else {
+        setOrders(data || []);
+      }
+      setLoading(false);
+    }
+    fetchOrders();
+  }, [resolvedParams.shopId]);
+
   const groupedOrders = useMemo(() => {
-    const filtered = DUMMY_ORDERS.filter(o => o.type === activeTab);
-    const groups: Record<string, typeof DUMMY_ORDERS> = {};
+    const filtered = orders.filter(o => o.type === activeTab);
+    const groups: Record<string, typeof orders> = {};
     
     filtered.forEach(o => {
       // Create a URL-safe groupId
-      const rawId = o.sellerItemCode || o.sku;
+      const rawId = o.seller_item_code || o.sku;
       // encode for url just in case
       const key = encodeURIComponent(rawId);
       if (!groups[key]) groups[key] = [];
       groups[key].push(o);
     });
 
-    return Object.entries(groups).map(([groupId, orders]) => ({
+    return Object.entries(groups).map(([groupId, ordersList]) => ({
       groupId,
-      orders
+      orders: ordersList
     }));
-  }, [activeTab]);
+  }, [orders, activeTab]);
 
   return (
     <div className="store-container">
@@ -61,41 +88,45 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
         </div>
       </header>
 
-      <div className="grid">
-        {groupedOrders.length === 0 && (
-          <p style={{ color: 'var(--text-muted)' }}>Hozircha buyurtmalar yo'q.</p>
-        )}
-        
-        {groupedOrders.map(({ groupId, orders }) => {
-          const sample = orders[0];
-          const totalQty = orders.reduce((sum, o) => sum + o.qty, 0);
-          const primaryCode = sample.sellerItemCode || sample.sku;
-          const secondaryCode = sample.sellerItemCode ? sample.sku : null;
+      {loading ? (
+        <p style={{ color: 'var(--text-muted)' }}>Yuklanmoqda...</p>
+      ) : (
+        <div className="grid">
+          {groupedOrders.length === 0 && (
+            <p style={{ color: 'var(--text-muted)' }}>Hozircha buyurtmalar yo'q.</p>
+          )}
           
-          return (
-            <Link 
-               href={`/shops/${resolvedParams.shopId}/${groupId}?type=${activeTab}`} 
-               key={groupId} 
-               className="order-card surface flex-col justify-between"
-            >
-              <div className="card-top flex justify-between">
-                <div className="flex-col">
-                  <span className="primary-code">{primaryCode}</span>
-                  {secondaryCode && <span className="secondary-code">{secondaryCode}</span>}
+          {groupedOrders.map(({ groupId, orders }) => {
+            const sample = orders[0];
+            const totalQty = orders.reduce((sum, o) => sum + o.qty, 0);
+            const primaryCode = sample.seller_item_code || sample.sku;
+            const secondaryCode = sample.seller_item_code ? sample.sku : null;
+            
+            return (
+              <Link 
+                 href={`/shops/${resolvedParams.shopId}/${groupId}?type=${activeTab}`} 
+                 key={groupId} 
+                 className="order-card surface flex-col justify-between"
+              >
+                <div className="card-top flex justify-between">
+                  <div className="flex-col">
+                    <span className="primary-code">{primaryCode}</span>
+                    {secondaryCode && <span className="secondary-code">{secondaryCode}</span>}
+                  </div>
+                  <div className="akt-badge">
+                    AKT: {sample.akt}
+                  </div>
                 </div>
-                <div className="akt-badge">
-                  AKT: {sample.akt}
+                
+                <div className="card-bottom flex justify-between items-center mt-4">
+                  <span className="product-title">{sample.title}</span>
+                  <span className="qty-badge">Soni: {totalQty} ta</span>
                 </div>
-              </div>
-              
-              <div className="card-bottom flex justify-between items-center mt-4">
-                <span className="product-title">{sample.title}</span>
-                <span className="qty-badge">Soni: {totalQty} ta</span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <style>{`
         .mb-8 { margin-bottom: 2rem; }

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
 
 export const metadata: Metadata = {
   title: 'Multiorder Panel',
@@ -14,9 +13,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="flex">
-        <Sidebar />
-        <main style={{ flex: 1, padding: '2rem', height: '100vh', overflowY: 'auto' }}>
+      <body>
+        <main style={{ padding: '2rem', height: '100vh', overflowY: 'auto', maxWidth: '1400px', margin: '0 auto' }}>
           {children}
         </main>
       </body>

@@ -1,17 +1,21 @@
 'use client';
 
-import { use, useMemo } from 'react';
+import { useState, useEffect, use, useMemo } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
-// Mock DB
-const DUMMY_ORDERS = [
-  { id: '101951650', akt: '120000799407', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:00', qty: 1, type: 'yangi' },
-  { id: '101951651', akt: '120000799407', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:02', qty: 1, type: 'yangi' },
-  { id: '101951652', akt: '120000799408', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:05', qty: 1, type: 'eski' },
-  { id: '101912514', akt: '120000799407', sku: 'UAKEENA-UAKEENMIKSER001-АЛЫЙ', sellerItemCode: '', title: 'UAKEEN ZL-2303 800W Qo‘l Mikseri', date: '2024-04-14 09:10', qty: 1, type: 'yangi' },
-  { id: '101912515', akt: '120000799408', sku: 'UAKEENA-UAKEENMIKSER001-АЛЫЙ', sellerItemCode: '', title: 'UAKEEN ZL-2303 800W Qo‘l Mikseri', date: '2024-04-14 09:12', qty: 1, type: 'yangi' },
-  { id: '101912516', akt: '120000799409', sku: 'BEAUTY-CREAM-001', sellerItemCode: 'BC-101', title: 'Yuz uchun oqartiruvchi krem', date: '2024-04-13 18:00', qty: 2, type: 'yangi' }
-];
+interface Order {
+  id: string; // Database uuid
+  akt: string;
+  order_id: string;
+  shop_name: string;
+  sku: string;
+  seller_item_code: string;
+  title: string;
+  qty: number;
+  type: string;
+  created_at: string;
+}
 
 export default function OrderDetailsPage({ params, searchParams }: { params: Promise<{ shopId: string, groupId: string }>, searchParams: Promise<{ type: string }> }) {
   const resolvedParams = use(params);
@@ -20,12 +24,27 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const decodedGroupId = decodeURIComponent(resolvedParams.groupId);
   const tabType = resolvedSearchParams.type || 'yangi';
 
-  const orders = useMemo(() => {
-    return DUMMY_ORDERS.filter(o => {
-      const gId = o.sellerItemCode || o.sku;
-      return gId === decodedGroupId && o.type === tabType;
-    });
-  }, [decodedGroupId, tabType]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDetails() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('shop_name', resolvedParams.shopId)
+        .eq('type', tabType);
+
+      if (!error && data) {
+        // filter exactly matching sku or seller_item_code
+        const filtered = data.filter(o => (o.seller_item_code || o.sku) === decodedGroupId);
+        setOrders(filtered);
+      }
+      setLoading(false);
+    }
+    fetchDetails();
+  }, [resolvedParams.shopId, tabType, decodedGroupId]);
 
   const sample = orders[0];
 
@@ -33,41 +52,45 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     <div className="details-container">
       <Link href={`/shops/${resolvedParams.shopId}`} className="back-link mb-4">← Orqaga ({tabType})</Link>
       
-      {sample ? (
-        <div className="header-info surface mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h1>{decodedGroupId}</h1>
-            <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta</span>
+      {loading ? (
+         <p style={{ color: 'var(--text-muted)' }}>Yuklanmoqda...</p>
+      ) : sample ? (
+        <>
+          <div className="header-info surface mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h1>{decodedGroupId}</h1>
+              <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta</span>
+            </div>
+            <p className="subtitle">{sample.title}</p>
+            {sample.seller_item_code && <p className="sku-text">SKU: {sample.sku}</p>}
           </div>
-          <p className="subtitle">{sample.title}</p>
-          {sample.sellerItemCode && <p className="sku-text">SKU: {sample.sku}</p>}
-        </div>
+
+          <div className="table-wrapper surface">
+            <table className="order-table">
+              <thead>
+                <tr>
+                  <th>Sana / Vaqt</th>
+                  <th>Buyurtma ID</th>
+                  <th>AKT Raqami</th>
+                  <th>Soni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o, i) => (
+                  <tr key={i}>
+                    <td>{new Date(o.created_at).toLocaleString('uz-UZ')}</td>
+                    <td className="font-medium">#{o.order_id}</td>
+                    <td>{o.akt}</td>
+                    <td>{o.qty}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       ) : (
         <h1 className="mb-6">Bunday mahsulot topilmadi</h1>
       )}
-
-      <div className="table-wrapper surface">
-        <table className="order-table">
-          <thead>
-            <tr>
-              <th>Sana / Vaqt</th>
-              <th>Buyurtma ID</th>
-              <th>AKT Raqami</th>
-              <th>Soni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o, i) => (
-              <tr key={i}>
-                <td>{o.date}</td>
-                <td className="font-medium">#{o.id}</td>
-                <td>{o.akt}</td>
-                <td>{o.qty}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
 
       <style>{`
         .mb-4 { margin-bottom: 1rem; }
