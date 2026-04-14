@@ -1,25 +1,54 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+
+interface Shop {
+  id: string;
+  name: string;
+}
 
 export default function ShopsPage() {
-  const shops = [
-    { id: 'zunitech-yandex', name: 'Zunitech Yandex' },
-    { id: 'savdo-yandex', name: 'Savdo Yandex' },
-    { id: 'zunitech-uzum', name: 'Zunitech Uzum' },
-    { id: 'savdo-uzum', name: 'Savdo Uzum' }
-  ];
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function getShops() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('shops')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (error) {
+        console.error("Do'konlarni tortishda xatolik:", error);
+      } else if (data) {
+        setShops(data);
+      }
+      setLoading(false);
+    }
+    getShops();
+  }, []);
 
   return (
     <div className="shops-container">
       <h1 className="page-title">Do'konlar Ro'yxati</h1>
-      <div className="grid">
-        {shops.map(shop => (
-          <Link href={`/shops/${shop.id}`} key={shop.id} className="shop-card surface">
-            <div className="shop-icon">🛒</div>
-            <h2>{shop.name}</h2>
-            <p>Buyurtmalarni boshqarish</p>
-          </Link>
-        ))}
-      </div>
+      
+      {loading ? (
+        <p style={{ color: 'var(--text-muted)' }}>Yuklanmoqda...</p>
+      ) : (
+        <div className="grid">
+          {shops.length === 0 && <p>Hozircha do'konlar yo'q</p>}
+          {shops.map(shop => (
+            <Link href={`/shops/${shop.id}`} key={shop.id} className="shop-card surface">
+              <div className="shop-icon">🛒</div>
+              <h2>{shop.name}</h2>
+              <p>Buyurtmalarni boshqarish</p>
+            </Link>
+          ))}
+        </div>
+      )}
 
       <style>{`
         .page-title {
