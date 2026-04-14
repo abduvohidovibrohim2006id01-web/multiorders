@@ -1,26 +1,31 @@
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
 export default function Sidebar() {
-  const routes = [
-    { name: 'Zunitech Yandex', path: '/zunitech-yandex' },
-    { name: 'Savdo Yandex', path: '/savdo-yandex' },
-    { name: 'Zunitech Uzum', path: '/zunitech-uzum' },
-    { name: 'Savdo Uzum', path: '/savdo-uzum' },
+  const pathname = usePathname() || '';
+
+  const navItems = [
+    { name: 'Barcha Do\'konlar', path: '/shops' },
   ];
 
   return (
-    <aside className="sidebar glass-panel">
+    <aside className="sidebar surface">
       <div className="sidebar-header">
         <h2>Multiorder</h2>
       </div>
       <nav className="flex-col gap-2">
-        {routes.map((r) => (
-          <a key={r.path} href={r.path} className="sidebar-link">
-            {r.name}
-          </a>
-        ))}
+        {navItems.map((r) => {
+          const isActive = pathname.startsWith(r.path);
+          return (
+            <Link key={r.path} href={r.path} className={`sidebar-link ${isActive ? 'active' : ''}`}>
+              {r.name}
+            </Link>
+          )
+        })}
       </nav>
       <style>{`
         .sidebar {
-          width: 260px;
+          width: 250px;
           height: 100vh;
           border-radius: 0;
           border-top: none;
@@ -30,25 +35,29 @@ export default function Sidebar() {
           display: flex;
           flex-direction: column;
           gap: 32px;
+          position: sticky;
+          top: 0;
         }
         .sidebar-header h2 {
-          background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          font-size: 1.5rem;
-          text-align: center;
+          color: var(--text-main);
+          font-size: 1.25rem;
+          font-weight: 700;
+          padding-left: 8px;
         }
         .sidebar-link {
-          padding: 12px 16px;
+          padding: 10px 14px;
           color: var(--text-muted);
-          text-decoration: none;
           border-radius: 8px;
-          transition: all 0.2s ease;
           font-weight: 500;
+          font-size: 0.95rem;
         }
         .sidebar-link:hover {
-           background: rgba(255,255,255,0.05);
+           background: var(--bg-color);
            color: var(--text-main);
+        }
+        .sidebar-link.active {
+          background: var(--text-main);
+          color: white;
         }
       `}</style>
     </aside>
