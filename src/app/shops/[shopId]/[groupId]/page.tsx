@@ -47,6 +47,22 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     fetchDetails();
   }, [resolvedParams.shopId, tabType, aktNumber]);
 
+  const groupedProducts = useMemo(() => {
+    const map = new Map<string, any>();
+    orders.forEach(o => {
+      // Sotuvchi kodi mavjud bo'lsa uni olamiz, aks holda SKU
+      const key = o.seller_item_code || o.sku;
+      if (!map.has(key)) {
+        map.set(key, { ...o, order_ids: new Set([o.order_id]) });
+      } else {
+        const existing = map.get(key);
+        existing.qty += o.qty;
+        existing.order_ids.add(o.order_id);
+      }
+    });
+    return Array.from(map.values());
+  }, [orders]);
+
   return (
     <div className="details-container">
       <Link href={`/shops/${resolvedParams.shopId}`} className="back-link mb-4">← Orqaga</Link>
@@ -58,32 +74,38 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
           <div className="header-info surface mb-6">
             <div className="flex justify-between items-center mb-2">
               <h1>AKT № {aktNumber} to'plami</h1>
-              <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta buyurtma</span>
+              <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta mahsulot</span>
             </div>
-            <p className="subtitle">{orders.length} xil mahsulot turi</p>
+            <p className="subtitle">{groupedProducts.length} xil o'ziga xos mahsulot turi</p>
           </div>
 
           <div className="table-wrapper surface">
             <table className="order-table">
               <thead>
                 <tr>
-                  <th>Vaqt</th>
+                  <th>AKT Raqami</th>
                   <th>Buyurtma ID</th>
-                  <th>SKU / Kod</th>
+                  <th>Sotuvchi Kodi</th>
+                  <th>Tizim SKU</th>
                   <th>Mahsulot nomi</th>
                   <th>Soni</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((o, i) => {
-                  const displayCode = o.seller_item_code || o.sku;
+                {groupedProducts.map((g, i) => {
+                  const idArr = Array.from(g.order_ids);
+                  const idDisplay = idArr.length > 1 ? `${idArr.length} ta buyurtma` : `#${idArr[0]}`;
+                  
                   return (
                     <tr key={i}>
-                      <td>{new Date(o.created_at).toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}</td>
-                      <td className="font-medium">#{o.order_id}</td>
-                      <td style={{ color: "var(--text-muted)" }}>{displayCode}</td>
-                      <td style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.title}</td>
-                      <td className="font-medium text-right">{o.qty}</td>
+                      <td>{g.akt}</td>
+                      <td className="font-medium" style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                        {idDisplay}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{g.seller_item_code || "-"}</td>
+                      <td style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{g.sku}</td>
+                      <td style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</td>
+                      <td className="font-medium text-right" style={{ fontSize: '1.15rem' }}>{g.qty}</td>
                     </tr>
                   );
                 })}

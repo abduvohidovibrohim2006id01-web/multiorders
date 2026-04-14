@@ -106,10 +106,10 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
                  className="order-card surface flex-col justify-between"
               >
                 <div className="card-top flex-col gap-2">
-                  <span className="primary-code">AKT № {groupId}</span>
-                  <span className="secondary-code">
-                    {ts.toLocaleDateString("uz-UZ")} | {ts.toLocaleTimeString("uz-UZ", {hour: '2-digit', minute:'2-digit'})}
+                  <span className="primary-code" style={{ fontSize: '1.35rem' }}>
+                    {ts.toLocaleDateString("ru-RU", { day: '2-digit', month: '2-digit', year: 'numeric' })} | {ts.toLocaleTimeString("ru-RU", {hour: '2-digit', minute:'2-digit'})}
                   </span>
+                  <span className="secondary-code">AKT № {groupId}</span>
                 </div>
                 
                 <div className="card-bottom flex justify-between items-center mt-4">
