@@ -137,12 +137,10 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
             <table className="order-table">
               <thead>
                 <tr>
-                  <th>AKT Raqami</th>
                   <th>Buyurtma ID</th>
-                  <th>Sotuvchi Kodi</th>
-                  <th>Tizim SKU</th>
-                  <th>Mahsulot nomi</th>
-                  <th style={{ textAlign: 'right' }}>Topilgan / Jami</th>
+                  <th>Sotuvchi Kodi / SKU</th>
+                  <th style={{ width: '40%' }}>Mahsulot nomi</th>
+                  <th style={{ textAlign: 'right' }}>Holat</th>
                 </tr>
               </thead>
               <tbody>
@@ -152,20 +150,25 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                   const isDone = g.total_picked >= g.qty;
                   
                   return (
-                    <tr key={i} style={isDone ? { opacity: 0.6, backgroundColor: '#f0fdf4' } : {}}>
-                      <td>{g.akt}</td>
-                      <td className="font-medium" style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+                    <tr key={i} className={isDone ? 'done-row' : ''}>
+                      <td data-label="ID" className="font-medium" style={{ color: "var(--text-muted)", fontSize: "0.85rem", verticalAlign: 'top' }}>
                         {idDisplay}
                       </td>
-                      <td style={{ fontWeight: 600 }}>{g.seller_item_code || "-"}</td>
-                      <td style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>{g.sku}</td>
-                      <td style={{ maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{g.title}</td>
-                      <td className="font-medium text-right" style={{ fontSize: '1.05rem', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-                        <button onClick={() => decrementQty(g)} className="counter-btn" disabled={g.total_picked <= 0}>-</button>
-                        <span style={{ minWidth: '40px', textAlign: 'center' }}>
-                           <span style={{ color: isDone ? 'var(--primary)' : 'inherit' }}>{g.total_picked}</span> / {g.qty}
-                        </span>
-                        <button onClick={() => incrementQty(g)} className="counter-btn" disabled={g.total_picked >= g.qty}>+</button>
+                      <td data-label="KOD" style={{ verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 600 }}>{g.seller_item_code || "-"}</div>
+                        <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: '4px', wordBreak: 'break-all' }}>{g.sku}</div>
+                      </td>
+                      <td data-label="NOMI" style={{ whiteSpace: 'normal', verticalAlign: 'top', lineHeight: '1.4' }}>
+                        {g.title}
+                      </td>
+                      <td data-label="SONI" className="font-medium text-right picker-cell">
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+                          <button onClick={() => decrementQty(g)} className="counter-btn" disabled={g.total_picked <= 0}>-</button>
+                          <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '1.1rem' }}>
+                             <strong style={{ color: isDone ? 'var(--success-text)' : 'inherit' }}>{g.total_picked}</strong> <span style={{color: 'var(--text-muted)', fontSize: '0.9rem'}}>/ {g.qty}</span>
+                          </span>
+                          <button onClick={() => incrementQty(g)} className="counter-btn" disabled={g.total_picked >= g.qty}>+</button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -197,11 +200,13 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         .back-link:hover { color: var(--text-main); transform: translateX(-4px); }
         h1 { font-size: 1.5rem; color: var(--text-main); }
         .subtitle { color: var(--text-muted); margin-top: 0.5rem; }
-        .table-wrapper { overflow-x: auto; border-radius: var(--radius); }
+        
+        .table-wrapper { border-radius: var(--radius); }
         .order-table { width: 100%; border-collapse: collapse; }
-        .order-table th { text-align: left; padding: 1rem; background: var(--bg); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; }
-        .order-table td { padding: 1rem; border-bottom: 1px solid #f1f5f9; color: var(--text-main); vertical-align: middle; }
+        .order-table th { text-align: left; padding: 1rem; background: var(--bg); color: var(--text-muted); font-size: 0.85rem; font-weight: 600; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; }
+        .order-table td { padding: 1rem; border-bottom: 1px solid #eaebed; color: var(--text-main); }
         .order-table tr:last-child td { border-bottom: none; }
+        .done-row { opacity: 0.6; background-color: #f8fafc; transition: 0.3s; }
         
         .action-btn {
           padding: 8px 16px; border-radius: 8px; border: none; font-weight: 500; cursor: pointer; transition: 0.2s;
@@ -212,25 +217,19 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         .delete-btn:hover { background: #fecaca; }
         
         .tab-btn {
-          padding: 10px 20px;
-          border: none;
-          background: transparent;
-          border-radius: calc(var(--radius) - 2px);
-          font-weight: 500;
-          color: var(--text-muted);
-          cursor: pointer;
-          transition: 0.2s ease;
-          flex: 1;
+          padding: 10px 20px; border: none; background: transparent; border-radius: calc(var(--radius) - 2px);
+          font-weight: 500; color: var(--text-muted); cursor: pointer; transition: 0.2s ease; flex: 1;
         }
         .tab-btn:hover { color: var(--text-main); }
         .tab-btn.active { background: white; color: var(--text-main); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 
         .counter-btn {
-          width: 30px; height: 30px; border-radius: 6px; border: 1px solid #e2e8f0; background: var(--surface);
-          display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.1rem;
+          width: 34px; height: 34px; border-radius: 6px; border: 1px solid #e2e8f0; background: var(--surface);
+          display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; transition: 0.2s;
         }
-        .counter-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .counter-btn:hover:not(:disabled) { background: #f8fafc; }
+        .counter-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .counter-btn:active:not(:disabled) { transform: scale(0.95); }
+        .counter-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
       `}</style>
     </div>
   );
