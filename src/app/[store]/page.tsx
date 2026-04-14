@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, use } from 'react';
 
 const DUMMY_ORDERS = [
   { id: '101951650', akt: '120000799407', sku: 'KEMEI-KEMEITRIMMER-МЕНТОЛ', sellerItemCode: 'KM-J03', title: 'Soch olish mashinkasi Kemei professional trimmer', date: '2024-04-14 09:00', qty: 1, type: 'yangi' },
@@ -11,12 +11,12 @@ const DUMMY_ORDERS = [
   { id: '101912516', akt: '120000799409', sku: 'BEAUTY-CREAM-001', sellerItemCode: 'BC-101', title: 'Yuz uchun oqartiruvchi krem', date: '2024-04-13 18:00', qty: 2, type: 'yangi' }
 ];
 
-export default function StorePage({ params }: { params: { store: string } }) {
+export default function StorePage({ params }: { params: Promise<{ store: string }> }) {
   const [activeTab, setActiveTab] = useState<'yangi' | 'eski'>('yangi');
   const [selectedGroup, setSelectedGroup] = useState<any[] | null>(null);
 
-  // Ismni chiroyli formatlash: zunitech-yandex -> Zunitech Yandex
-  const storeName = params.store.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const resolvedParams = use(params);
+  const storeName = resolvedParams.store.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
   // Filter and Group Data
   const groupedOrders = useMemo(() => {
