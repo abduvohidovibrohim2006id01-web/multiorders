@@ -68,3 +68,110 @@ a {
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Main Layout Wrapper */
+.main-layout {
+  padding: 2rem;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Base Responsive Elements */
+@media (max-width: 768px) {
+  .main-layout {
+    padding: 1rem;
+  }
+  
+  /* Shop Page Adjustments */
+  .shops-container h1.page-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  .shop-card {
+    padding: 1.5rem !important;
+  }
+  
+  /* Orders Group Cards Adjustments */
+  .store-container header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .store-container header .tabs {
+    width: 100%;
+    display: flex;
+  }
+  
+  .tab-btn {
+    flex: 1;
+    font-size: 0.9rem;
+    padding: 8px 10px !important;
+  }
+
+  .card-bottom {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  /* Details Page Elements */
+  .details-container .flex.justify-between.items-center.mb-4 {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .details-container .flex.justify-between.items-center.mb-2 {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  .details-container .header-info {
+    padding: 1rem !important;
+  }
+
+  .action-btn {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .tabs.surface {
+    flex-direction: column;
+  }
+
+  /* Tables Scroll Snapping */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding-bottom: 0.5rem; /* Scrollbar room */
+  }
+
+  .order-table th, .order-table td {
+    padding: 0.75rem !important;
+    font-size: 0.85rem !important;
+    white-space: nowrap; /* Prevent awkward wrapping causing vertical stretch */
+  }
+}
+
+/* Very Small Mobile Details */
+@media (max-width: 480px) {
+  .details-container .flex.gap-2 {
+    flex-direction: column;
+    width: 100%;
+  }
+  .order-card .primary-code {
+    font-size: 1.15rem !important;
+  }
+}
