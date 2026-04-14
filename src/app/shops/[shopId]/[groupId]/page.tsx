@@ -21,7 +21,8 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const resolvedParams = use(params);
   const resolvedSearchParams = use(searchParams);
   
-  const decodedGroupId = decodeURIComponent(resolvedParams.groupId);
+  // Bu yerda groupId endi AKT Raqami (masalan 120000799407)
+  const aktNumber = decodeURIComponent(resolvedParams.groupId);
   const tabType = resolvedSearchParams.type || 'yangi';
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -34,62 +35,64 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         .from('orders')
         .select('*')
         .eq('shop_name', resolvedParams.shopId)
-        .eq('type', tabType);
+        .eq('type', tabType)
+        .eq('akt', aktNumber)
+        .order('created_at', { ascending: false });
 
       if (!error && data) {
-        // filter exactly matching sku or seller_item_code
-        const filtered = data.filter(o => (o.seller_item_code || o.sku) === decodedGroupId);
-        setOrders(filtered);
+        setOrders(data);
       }
       setLoading(false);
     }
     fetchDetails();
-  }, [resolvedParams.shopId, tabType, decodedGroupId]);
-
-  const sample = orders[0];
+  }, [resolvedParams.shopId, tabType, aktNumber]);
 
   return (
     <div className="details-container">
-      <Link href={`/shops/${resolvedParams.shopId}`} className="back-link mb-4">← Orqaga ({tabType})</Link>
+      <Link href={`/shops/${resolvedParams.shopId}`} className="back-link mb-4">← Orqaga</Link>
       
       {loading ? (
          <p style={{ color: 'var(--text-muted)' }}>Yuklanmoqda...</p>
-      ) : sample ? (
+      ) : orders.length > 0 ? (
         <>
           <div className="header-info surface mb-6">
             <div className="flex justify-between items-center mb-2">
-              <h1>{decodedGroupId}</h1>
-              <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta</span>
+              <h1>AKT № {aktNumber} to'plami</h1>
+              <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta buyurtma</span>
             </div>
-            <p className="subtitle">{sample.title}</p>
-            {sample.seller_item_code && <p className="sku-text">SKU: {sample.sku}</p>}
+            <p className="subtitle">{orders.length} xil mahsulot turi</p>
           </div>
 
           <div className="table-wrapper surface">
             <table className="order-table">
               <thead>
                 <tr>
-                  <th>Sana / Vaqt</th>
+                  <th>Vaqt</th>
                   <th>Buyurtma ID</th>
-                  <th>AKT Raqami</th>
+                  <th>SKU / Kod</th>
+                  <th>Mahsulot nomi</th>
                   <th>Soni</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((o, i) => (
-                  <tr key={i}>
-                    <td>{new Date(o.created_at).toLocaleString('uz-UZ')}</td>
-                    <td className="font-medium">#{o.order_id}</td>
-                    <td>{o.akt}</td>
-                    <td>{o.qty}</td>
-                  </tr>
-                ))}
+                {orders.map((o, i) => {
+                  const displayCode = o.seller_item_code || o.sku;
+                  return (
+                    <tr key={i}>
+                      <td>{new Date(o.created_at).toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}</td>
+                      <td className="font-medium">#{o.order_id}</td>
+                      <td style={{ color: "var(--text-muted)" }}>{displayCode}</td>
+                      <td style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.title}</td>
+                      <td className="font-medium text-right">{o.qty}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </>
       ) : (
-        <h1 className="mb-6">Bunday mahsulot topilmadi</h1>
+        <h1 className="mb-6">Ushbu AKT ga tegishli buyurtmalar topilmadi</h1>
       )}
 
       <style>{`

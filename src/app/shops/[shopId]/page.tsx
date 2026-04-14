@@ -51,16 +51,14 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
     const groups: Record<string, typeof orders> = {};
     
     filtered.forEach(o => {
-      // Create a URL-safe groupId
-      const rawId = o.seller_item_code || o.sku;
-      // encode for url just in case
-      const key = encodeURIComponent(rawId);
+      // AKT bo'yicha guruhlash (To'plam)
+      const key = o.akt; 
       if (!groups[key]) groups[key] = [];
       groups[key].push(o);
     });
 
     return Object.entries(groups).map(([groupId, ordersList]) => ({
-      groupId,
+      groupId, // This is now AKT
       orders: ordersList
     }));
   }, [orders, activeTab]);
@@ -98,9 +96,8 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
           
           {groupedOrders.map(({ groupId, orders }) => {
             const sample = orders[0];
+            const ts = new Date(sample.created_at);
             const totalQty = orders.reduce((sum, o) => sum + o.qty, 0);
-            const primaryCode = sample.seller_item_code || sample.sku;
-            const secondaryCode = sample.seller_item_code ? sample.sku : null;
             
             return (
               <Link 
@@ -108,19 +105,16 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
                  key={groupId} 
                  className="order-card surface flex-col justify-between"
               >
-                <div className="card-top flex justify-between">
-                  <div className="flex-col">
-                    <span className="primary-code">{primaryCode}</span>
-                    {secondaryCode && <span className="secondary-code">{secondaryCode}</span>}
-                  </div>
-                  <div className="akt-badge">
-                    AKT: {sample.akt}
-                  </div>
+                <div className="card-top flex-col gap-2">
+                  <span className="primary-code">AKT № {groupId}</span>
+                  <span className="secondary-code">
+                    {ts.toLocaleDateString("uz-UZ")} | {ts.toLocaleTimeString("uz-UZ", {hour: '2-digit', minute:'2-digit'})}
+                  </span>
                 </div>
                 
                 <div className="card-bottom flex justify-between items-center mt-4">
-                  <span className="product-title">{sample.title}</span>
-                  <span className="qty-badge">Soni: {totalQty} ta</span>
+                  <span className="product-title">{orders.length} xil mahsulot</span>
+                  <span className="qty-badge">Jami {totalQty} ta buyurtma</span>
                 </div>
               </Link>
             );
