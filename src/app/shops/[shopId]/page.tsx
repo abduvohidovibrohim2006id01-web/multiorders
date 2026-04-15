@@ -49,17 +49,22 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
   const groupedOrders = useMemo(() => {
     const filtered = orders.filter(o => o.type === activeTab);
     const groups: Record<string, typeof orders> = {};
+    const INTERVAL = 5 * 60 * 1000; // 5 minutlik oyna
     
     filtered.forEach(o => {
-      // AKT bo'yicha guruhlash (To'plam)
-      const key = o.akt; 
+      const ts = new Date(o.created_at).getTime();
+      const intervalKey = Math.floor(ts / INTERVAL) * INTERVAL;
+      const key = String(intervalKey);
+      
       if (!groups[key]) groups[key] = [];
       groups[key].push(o);
     });
 
-    return Object.entries(groups).map(([groupId, ordersList]) => ({
-      groupId, // This is now AKT
-      orders: ordersList
+    return Object.entries(groups)
+      .sort(([keyA], [keyB]) => Number(keyB) - Number(keyA))
+      .map(([groupId, ordersList]) => ({
+        groupId, // Bu endi 171... millisekundlik vaqt belgisidir
+        orders: ordersList
     }));
   }, [orders, activeTab]);
 
@@ -99,6 +104,10 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
             const ts = new Date(sample.created_at);
             const totalQty = orders.reduce((sum, o) => sum + o.qty, 0);
             
+            // Unikal AKT raqamlarini jamlash
+            const akts = Array.from(new Set(orders.map(o => o.akt)));
+            const aktDisplay = akts.length > 2 ? `${akts[0]}, ${akts[1]} va yana ${akts.length - 2} ta` : akts.join(', ');
+            
             return (
               <Link 
                  href={`/shops/${resolvedParams.shopId}/${groupId}?type=${activeTab}`} 
@@ -109,7 +118,7 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
                   <span className="primary-code" style={{ fontSize: '1.35rem' }}>
                     {ts.toLocaleDateString("ru-RU", { day: '2-digit', month: '2-digit', year: 'numeric' })} | {ts.toLocaleTimeString("ru-RU", {hour: '2-digit', minute:'2-digit'})}
                   </span>
-                  <span className="secondary-code">AKT № {groupId}</span>
+                  <span className="secondary-code">AKTlar: {aktDisplay}</span>
                 </div>
                 
                 <div className="card-bottom flex justify-between items-center mt-4">

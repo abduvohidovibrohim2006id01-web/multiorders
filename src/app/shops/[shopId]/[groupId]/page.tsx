@@ -24,7 +24,12 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const resolvedParams = use(params);
   const resolvedSearchParams = use(searchParams);
   
-  const aktNumber = decodeURIComponent(resolvedParams.groupId);
+  // Bu yerda groupId endi 171... millisekundlik vaqt intervali
+  const intervalKey = Number(decodeURIComponent(resolvedParams.groupId));
+  const INTERVAL = 5 * 60 * 1000;
+  const startDate = new Date(intervalKey).toISOString();
+  const endDate = new Date(intervalKey + INTERVAL).toISOString();
+  
   const tabType = resolvedSearchParams.type || 'yangi';
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -39,7 +44,8 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         .select('*')
         .eq('shop_name', resolvedParams.shopId)
         .eq('type', tabType)
-        .eq('akt', aktNumber)
+        .gte('created_at', startDate)
+        .lt('created_at', endDate)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -48,20 +54,26 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
       setLoading(false);
     }
     fetchDetails();
-  }, [resolvedParams.shopId, tabType, aktNumber]);
+  }, [resolvedParams.shopId, tabType, startDate, endDate]);
 
   // Arxivlash va O'chirish funksiyalari
   async function archiveBatch() {
     if (!confirm("Ushbu to'plamni 'Eski buyurtmalar' ga arxivlaysizmi?")) return;
     setLoading(true);
-    await supabase.from('orders').update({ type: 'eski' }).eq('shop_name', resolvedParams.shopId).eq('akt', aktNumber);
+    await supabase.from('orders').update({ type: 'eski' })
+        .eq('shop_name', resolvedParams.shopId)
+        .gte('created_at', startDate)
+        .lt('created_at', endDate);
     router.push(`/shops/${resolvedParams.shopId}?type=eski`);
   }
 
   async function deleteBatch() {
     if (!confirm("Diqqat! Ushbu to'plam bazadan butunlay O'CHIRIB YUBORILADI. Davom etasizmi?")) return;
     setLoading(true);
-    await supabase.from('orders').delete().eq('shop_name', resolvedParams.shopId).eq('akt', aktNumber);
+    await supabase.from('orders').delete()
+        .eq('shop_name', resolvedParams.shopId)
+        .gte('created_at', startDate)
+        .lt('created_at', endDate);
     router.push(`/shops/${resolvedParams.shopId}`);
   }
 
@@ -121,10 +133,11 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         <>
           <div className="header-info surface mb-6 flex-col">
             <div className="flex justify-between items-center mb-2">
-              <h1>AKT № {aktNumber} to'plami</h1>
+              <h1>Yuklangan To'plam</h1>
               <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta mahsulot</span>
             </div>
-            <p className="subtitle">{orders.length} xil mahsulot obyekti birlashdi</p>
+            <p className="subtitle">AKTlar: {Array.from(new Set(orders.map(o => o.akt))).join(', ')}</p>
+            <p className="subtitle" style={{fontSize: '0.85rem', marginTop: '4px'}}>{orders.length} xil mahsulot obyekti birlashdi</p>
           </div>
 
           <div className="tabs surface p-1 mb-6" style={{ display: 'flex', gap: '0.5rem' }}>
