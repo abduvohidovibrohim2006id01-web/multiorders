@@ -36,6 +36,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const [loading, setLoading] = useState(true);
   const [navTab, setNavTab] = useState<'barcha' | 'olinmagan' | 'olingan'>('barcha');
   const [selectedBrand, setSelectedBrand] = useState<string>('Barchasi');
+  const [selectedAkt, setSelectedAkt] = useState<string>('Barchasi');
 
   useEffect(() => {
     async function fetchDetails() {
@@ -105,10 +106,17 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     return Array.from(brands).sort();
   }, [orders]);
 
+  const availableAKTs = useMemo(() => {
+    const akts = new Set<string>();
+    orders.forEach(o => akts.add(o.akt));
+    return Array.from(akts).sort();
+  }, [orders]);
+
   const groupedProducts = useMemo(() => {
     const map = new Map<string, any>();
     orders.forEach(o => {
-      const key = o.seller_item_code || o.sku;
+      // AKT va SKU bo'yicha to'liq ajratib guruhlash (har xil AKT dagi bir xil tovar qo'shilib ketmasligi uchun)
+      const key = `${o.akt}_${o.seller_item_code || o.sku}`;
       if (!map.has(key)) {
         map.set(key, { 
             akt: o.akt, seller_item_code: o.seller_item_code, sku: o.sku, title: o.title,
@@ -133,6 +141,11 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
       array = array.filter(g => extractBrand(g.sku) === selectedBrand);
     }
     
+    // AKT filtri
+    if (selectedAkt !== 'Barchasi') {
+      array = array.filter(g => g.akt === selectedAkt);
+    }
+    
     // Alifbo tartibida saralash (Sotuvchi kodi => bo'lmasa SKU)
     array.sort((a, b) => {
       const codeA = (a.seller_item_code && a.seller_item_code !== '-') ? a.seller_item_code : a.sku;
@@ -141,7 +154,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     });
     
     return array;
-  }, [orders, navTab, selectedBrand]);
+  }, [orders, navTab, selectedBrand, selectedAkt]);
 
   return (
     <div className="details-container">
@@ -162,26 +175,36 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
               <h1>Yuklangan To'plam</h1>
               <span className="qty-badge">Jami: {orders.reduce((acc, o) => acc + o.qty, 0)} ta mahsulot</span>
             </div>
-            <p className="subtitle">AKTlar: {Array.from(new Set(orders.map(o => o.akt))).join(', ')}</p>
+            <p className="subtitle">AKTlar: {availableAKTs.join(', ')}</p>
             <p className="subtitle" style={{fontSize: '0.85rem', marginTop: '4px'}}>{orders.length} xil mahsulot obyekti birlashdi</p>
           </div>
 
           <div className="filters-wrapper" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', justifyContent: 'space-between' }}>
-            <div className="tabs surface p-1" style={{ display: 'flex', gap: '0.5rem', flex: '1 1 auto', minWidth: '300px' }}>
+            <div className="tabs surface p-1" style={{ display: 'flex', gap: '0.5rem', flex: '1 1 auto', minWidth: '280px' }}>
               <button className={`tab-btn ${navTab === 'barcha' ? 'active' : ''}`} onClick={() => setNavTab('barcha')}>Barcha</button>
               <button className={`tab-btn ${navTab === 'olinmagan' ? 'active' : ''}`} onClick={() => setNavTab('olinmagan')}>Olinmagan</button>
               <button className={`tab-btn ${navTab === 'olingan' ? 'active' : ''}`} onClick={() => setNavTab('olingan')}>Olinganlar</button>
             </div>
             
-            <div className="brand-select surface" style={{ display: 'flex', alignItems: 'center', padding: '0 1rem', borderRadius: 'calc(var(--radius) - 2px)', flex: '0 1 auto', height: '44px' }}>
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Guruh:</span>
+            <div className="brand-select surface" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', padding: '0 1rem', borderRadius: 'calc(var(--radius) - 2px)', flex: '0 1 auto', minHeight: '44px', gap: '0.5rem' }}>
               <select 
                 value={selectedBrand} 
                 onChange={e => setSelectedBrand(e.target.value)}
                 style={{ border: 'none', outline: 'none', background: 'transparent', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer' }}
               >
-                <option value="Barchasi">Barcha jadvallar</option>
+                <option value="Barchasi">Barcha Guruhlar</option>
                 {availableBrands.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+
+              <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 4px' }}></div>
+
+              <select 
+                value={selectedAkt} 
+                onChange={e => setSelectedAkt(e.target.value)}
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', maxWidth: '140px' }}
+              >
+                <option value="Barchasi">Hamma AKTlar</option>
+                {availableAKTs.map(a => <option key={a} value={a}>{a}</option>)}
               </select>
             </div>
           </div>
