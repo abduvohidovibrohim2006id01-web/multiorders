@@ -38,6 +38,8 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const [navTab, setNavTab] = useState<'barcha' | 'olinmagan' | 'olingan'>('barcha');
   const [selectedBrand, setSelectedBrand] = useState<string>('Barchasi');
   const [selectedAkt, setSelectedAkt] = useState<string>('Barchasi');
+  const [selectedImg, setSelectedImg] = useState<string | null>(null);
+
 
   useEffect(() => {
     async function fetchDetails() {
@@ -233,28 +235,31 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                         {idDisplay}
                       </td>
                       <td data-label="KOD" style={{ verticalAlign: 'top' }}>
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           {(g.image_url && g.image_url !== '-') && (
                             <img 
                               src={g.image_url.includes('/original') ? g.image_url : `${g.image_url.replace(/\/$/, '')}/original`} 
                               alt={g.sku} 
+                              onClick={() => setSelectedImg(g.image_url)}
                               style={{ 
-                                width: '216px', 
-                                height: '288px', 
-                                minWidth: '216px', 
+                                width: '69px', 
+                                height: '69px', 
+                                minWidth: '69px', 
                                 objectFit: 'cover', 
-                                borderRadius: '12px', 
+                                borderRadius: '8px', 
                                 border: '1px solid #e2e8f0', 
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                                cursor: 'zoom-in',
+                                transition: '0.2s ease'
                               }} 
+                              className="hover-scale"
                             />
                           )}
                           <div>
-                            <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                            <div style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--text-main)', marginBottom: '2px' }}>
                                {(g.seller_item_code && g.seller_item_code !== '-') ? g.seller_item_code : g.sku}
                             </div>
                             {((g.seller_item_code && g.seller_item_code !== '-') && g.seller_item_code !== g.sku) && (
-                               <div style={{ color: "var(--text-muted)", fontSize: "0.9rem", wordBreak: 'break-all' }}>{g.sku}</div>
+                               <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", wordBreak: 'break-all' }}>{g.sku}</div>
                             )}
                           </div>
                         </div>
@@ -285,8 +290,48 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         <h1 className="mb-6">Ushbu AKT ga tegishli buyurtmalar topilmadi</h1>
       )}
 
+      {selectedImg && (
+        <div className="img-modal-overlay" onClick={() => setSelectedImg(null)}>
+          <div className="img-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="img-modal-close" onClick={() => setSelectedImg(null)}>&times;</button>
+            <img 
+              src={selectedImg.includes('/original') ? selectedImg : `${selectedImg.replace(/\/$/, '')}/original`} 
+              alt="Preview" 
+            />
+          </div>
+        </div>
+      )}
+
       <style>{`
+        .img-modal-overlay {
+          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center;
+          z-index: 1000; backdrop-filter: blur(8px); animation: fadeIn 0.3s ease;
+        }
+        .img-modal-content {
+          position: relative; max-width: 90%; max-height: 90%;
+          background: white; padding: 10px; border-radius: 16px;
+          box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+          animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .img-modal-content img {
+          max-width: 100%; max-height: 80vh; border-radius: 8px; display: block;
+        }
+        .img-modal-close {
+          position: absolute; top: -15px; right: -15px; width: 40px; height: 40px;
+          background: white; border: none; border-radius: 50%; font-size: 1.5rem;
+          display: flex; align-items: center; justify-content: center; cursor: pointer;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.2s;
+        }
+        .img-modal-close:hover { transform: scale(1.1); background: #f1f5f9; }
+        
+        .hover-scale:hover { transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
         .mb-4 { margin-bottom: 1rem; }
+
         .mb-6 { margin-bottom: 1.5rem; }
         .flex { display: flex; }
         .flex-col { display: flex; flex-direction: column; }
