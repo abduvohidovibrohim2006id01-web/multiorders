@@ -17,6 +17,7 @@ interface Order {
   type: string;
   created_at: string;
   picked_qty: number; // Yig'ilgan mahsulot soni
+  image_url?: string;
 }
 
 export default function OrderDetailsPage({ params, searchParams }: { params: Promise<{ shopId: string, groupId: string }>, searchParams: Promise<{ type: string }> }) {
@@ -120,6 +121,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
       if (!map.has(key)) {
         map.set(key, { 
             akt: o.akt, seller_item_code: o.seller_item_code, sku: o.sku, title: o.title,
+            image_url: o.image_url,
             qty: o.qty, total_picked: o.picked_qty || 0,
             order_ids: new Set([o.order_id]), orders: [o] 
         });
@@ -231,12 +233,19 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                         {idDisplay}
                       </td>
                       <td data-label="KOD" style={{ verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 600 }}>
-                           {(g.seller_item_code && g.seller_item_code !== '-') ? g.seller_item_code : g.sku}
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                          {(g.image_url && g.image_url !== '-') && (
+                            <img src={g.image_url} alt={g.sku} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
+                          )}
+                          <div>
+                            <div style={{ fontWeight: 600 }}>
+                               {(g.seller_item_code && g.seller_item_code !== '-') ? g.seller_item_code : g.sku}
+                            </div>
+                            {((g.seller_item_code && g.seller_item_code !== '-') && g.seller_item_code !== g.sku) && (
+                               <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: '4px', wordBreak: 'break-all' }}>{g.sku}</div>
+                            )}
+                          </div>
                         </div>
-                        {((g.seller_item_code && g.seller_item_code !== '-') && g.seller_item_code !== g.sku) && (
-                           <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: '4px', wordBreak: 'break-all' }}>{g.sku}</div>
-                        )}
                       </td>
                       <td data-label="NOMI" style={{ whiteSpace: 'normal', verticalAlign: 'top', lineHeight: '1.4' }}>
                         {g.title}
