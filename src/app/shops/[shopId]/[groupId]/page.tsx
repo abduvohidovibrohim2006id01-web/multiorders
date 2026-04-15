@@ -35,6 +35,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [navTab, setNavTab] = useState<'barcha' | 'olinmagan' | 'olingan'>('barcha');
+  const [selectedBrand, setSelectedBrand] = useState<string>('Barchasi');
 
   useEffect(() => {
     async function fetchDetails() {
@@ -92,6 +93,18 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     await supabase.from('orders').update({ picked_qty: (target.picked_qty || 0) - 1 }).eq('id', target.id);
   }
 
+  const extractBrand = (sku: string) => {
+    if (!sku) return "Boshqa";
+    const parts = sku.split('-');
+    return parts.length > 1 ? parts[0] : "Boshqa";
+  };
+
+  const availableBrands = useMemo(() => {
+    const brands = new Set<string>();
+    orders.forEach(o => brands.add(extractBrand(o.sku)));
+    return Array.from(brands).sort();
+  }, [orders]);
+
   const groupedProducts = useMemo(() => {
     const map = new Map<string, any>();
     orders.forEach(o => {
@@ -115,6 +128,11 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     if (navTab === 'olinmagan') array = array.filter(g => g.total_picked < g.qty);
     if (navTab === 'olingan') array = array.filter(g => g.total_picked >= g.qty);
     
+    // Brend filtri
+    if (selectedBrand !== 'Barchasi') {
+      array = array.filter(g => extractBrand(g.sku) === selectedBrand);
+    }
+    
     // Alifbo tartibida saralash (Sotuvchi kodi => bo'lmasa SKU)
     array.sort((a, b) => {
       const codeA = (a.seller_item_code && a.seller_item_code !== '-') ? a.seller_item_code : a.sku;
@@ -123,7 +141,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     });
     
     return array;
-  }, [orders, navTab]);
+  }, [orders, navTab, selectedBrand]);
 
   return (
     <div className="details-container">
@@ -148,10 +166,24 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
             <p className="subtitle" style={{fontSize: '0.85rem', marginTop: '4px'}}>{orders.length} xil mahsulot obyekti birlashdi</p>
           </div>
 
-          <div className="tabs surface p-1 mb-6" style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className={`tab-btn ${navTab === 'barcha' ? 'active' : ''}`} onClick={() => setNavTab('barcha')}>Barcha buyurtmalar</button>
-            <button className={`tab-btn ${navTab === 'olinmagan' ? 'active' : ''}`} onClick={() => setNavTab('olinmagan')}>Olinmagan buyurtmalar</button>
-            <button className={`tab-btn ${navTab === 'olingan' ? 'active' : ''}`} onClick={() => setNavTab('olingan')}>Olingan buyurtmalar</button>
+          <div className="filters-wrapper" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem', justifyContent: 'space-between' }}>
+            <div className="tabs surface p-1" style={{ display: 'flex', gap: '0.5rem', flex: '1 1 auto', minWidth: '300px' }}>
+              <button className={`tab-btn ${navTab === 'barcha' ? 'active' : ''}`} onClick={() => setNavTab('barcha')}>Barcha</button>
+              <button className={`tab-btn ${navTab === 'olinmagan' ? 'active' : ''}`} onClick={() => setNavTab('olinmagan')}>Olinmagan</button>
+              <button className={`tab-btn ${navTab === 'olingan' ? 'active' : ''}`} onClick={() => setNavTab('olingan')}>Olinganlar</button>
+            </div>
+            
+            <div className="brand-select surface" style={{ display: 'flex', alignItems: 'center', padding: '0 1rem', borderRadius: 'calc(var(--radius) - 2px)', flex: '0 1 auto', height: '44px' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Guruh:</span>
+              <select 
+                value={selectedBrand} 
+                onChange={e => setSelectedBrand(e.target.value)}
+                style={{ border: 'none', outline: 'none', background: 'transparent', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer' }}
+              >
+                <option value="Barchasi">Barcha jadvallar</option>
+                {availableBrands.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
           </div>
 
           <div className="table-wrapper surface">
