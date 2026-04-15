@@ -233,16 +233,28 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                         {idDisplay}
                       </td>
                       <td data-label="KOD" style={{ verticalAlign: 'top' }}>
-                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexDirection: 'column' }}>
                           {(g.image_url && g.image_url !== '-') && (
-                            <img src={g.image_url.includes('/original') ? g.image_url : `${g.image_url.replace(/\/$/, '')}/original`} alt={g.sku} style={{ width: '68px', height: '68px', minWidth: '68px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }} />
+                            <img 
+                              src={g.image_url.includes('/original') ? g.image_url : `${g.image_url.replace(/\/$/, '')}/original`} 
+                              alt={g.sku} 
+                              style={{ 
+                                width: '216px', 
+                                height: '288px', 
+                                minWidth: '216px', 
+                                objectFit: 'cover', 
+                                borderRadius: '12px', 
+                                border: '1px solid #e2e8f0', 
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' 
+                              }} 
+                            />
                           )}
                           <div>
-                            <div style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-main)', marginBottom: '4px' }}>
+                            <div style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-main)', marginBottom: '4px' }}>
                                {(g.seller_item_code && g.seller_item_code !== '-') ? g.seller_item_code : g.sku}
                             </div>
                             {((g.seller_item_code && g.seller_item_code !== '-') && g.seller_item_code !== g.sku) && (
-                               <div style={{ color: "var(--text-muted)", fontSize: "0.8rem", wordBreak: 'break-all' }}>{g.sku}</div>
+                               <div style={{ color: "var(--text-muted)", fontSize: "0.9rem", wordBreak: 'break-all' }}>{g.sku}</div>
                             )}
                           </div>
                         </div>
