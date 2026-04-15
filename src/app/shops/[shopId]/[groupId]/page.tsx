@@ -114,6 +114,14 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
     let array = Array.from(map.values());
     if (navTab === 'olinmagan') array = array.filter(g => g.total_picked < g.qty);
     if (navTab === 'olingan') array = array.filter(g => g.total_picked >= g.qty);
+    
+    // Alifbo tartibida saralash (Sotuvchi kodi => bo'lmasa SKU)
+    array.sort((a, b) => {
+      const codeA = (a.seller_item_code && a.seller_item_code !== '-') ? a.seller_item_code : a.sku;
+      const codeB = (b.seller_item_code && b.seller_item_code !== '-') ? b.seller_item_code : b.sku;
+      return String(codeA).localeCompare(String(codeB));
+    });
+    
     return array;
   }, [orders, navTab]);
 
