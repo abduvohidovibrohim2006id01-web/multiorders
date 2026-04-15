@@ -235,7 +235,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                       <td data-label="KOD" style={{ verticalAlign: 'top' }}>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                           {(g.image_url && g.image_url !== '-') && (
-                            <img src={g.image_url} alt={g.sku} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
+                            <img src={g.image_url.includes('/original') ? g.image_url : `${g.image_url.replace(/\/$/, '')}/original`} alt={g.sku} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0' }} />
                           )}
                           <div>
                             <div style={{ fontWeight: 600 }}>
