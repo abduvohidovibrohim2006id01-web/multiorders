@@ -168,8 +168,12 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                         {idDisplay}
                       </td>
                       <td data-label="KOD" style={{ verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 600 }}>{g.seller_item_code || "-"}</div>
-                        <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: '4px', wordBreak: 'break-all' }}>{g.sku}</div>
+                        <div style={{ fontWeight: 600 }}>
+                           {(g.seller_item_code && g.seller_item_code !== '-') ? g.seller_item_code : g.sku}
+                        </div>
+                        {((g.seller_item_code && g.seller_item_code !== '-') && g.seller_item_code !== g.sku) && (
+                           <div style={{ color: "var(--text-muted)", fontSize: "0.75rem", marginTop: '4px', wordBreak: 'break-all' }}>{g.sku}</div>
+                        )}
                       </td>
                       <td data-label="NOMI" style={{ whiteSpace: 'normal', verticalAlign: 'top', lineHeight: '1.4' }}>
                         {g.title}
