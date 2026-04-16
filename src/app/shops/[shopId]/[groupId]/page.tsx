@@ -226,7 +226,9 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
               <tbody>
                 {groupedProducts.map((g, i) => {
                   const idArr = Array.from(g.order_ids);
-                  const idDisplay = idArr.length > 1 ? `${idArr.length} ta buyurtma` : `#${idArr[0]}`;
+                  const idDisplay = idArr.length > 1 
+                    ? idArr.map(id => `#${id}`).join(', ') 
+                    : `#${idArr[0]}`;
                   const isDone = g.total_picked >= g.qty;
                   
                   return (
