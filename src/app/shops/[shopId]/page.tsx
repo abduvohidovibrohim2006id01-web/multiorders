@@ -49,7 +49,7 @@ export default function ShopOrdersPage({ params }: { params: Promise<{ shopId: s
   const groupedOrders = useMemo(() => {
     const filtered = orders.filter(o => o.type === activeTab);
     const groups: Record<string, typeof orders> = {};
-    const INTERVAL = 5 * 60 * 1000; // 5 minutlik oyna
+    const INTERVAL = 1 * 60 * 1000; // 1 minutlik oyna (toplamlar ajralishi uchun)
     
     filtered.forEach(o => {
       const ts = new Date(o.created_at).getTime();

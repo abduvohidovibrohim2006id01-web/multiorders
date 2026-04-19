@@ -27,7 +27,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   
   // Bu yerda groupId endi 171... millisekundlik vaqt intervali
   const intervalKey = Number(decodeURIComponent(resolvedParams.groupId));
-  const INTERVAL = 5 * 60 * 1000;
+  const INTERVAL = 1 * 60 * 1000;
   const startDate = new Date(intervalKey).toISOString();
   const endDate = new Date(intervalKey + INTERVAL).toISOString();
   
