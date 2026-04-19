@@ -118,14 +118,20 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
   const groupedProducts = useMemo(() => {
     const map = new Map<string, any>();
     orders.forEach(o => {
-      // AKT va SKU bo'yicha to'liq ajratib guruhlash (har xil AKT dagi bir xil tovar qo'shilib ketmasligi uchun)
-      const key = `${o.akt}_${o.seller_item_code || o.sku}`;
+      // Faqat SKU (sotuvchi kodi) bo'yicha guruhlash
+      const key = o.seller_item_code || o.sku;
       if (!map.has(key)) {
         map.set(key, { 
-            akt: o.akt, seller_item_code: o.seller_item_code, sku: o.sku, title: o.title,
+            akt: o.akt, 
+            akts: new Set([o.akt]), // AKT raqamlarini to'plash
+            seller_item_code: o.seller_item_code, 
+            sku: o.sku, 
+            title: o.title,
             image_url: o.image_url,
-            qty: o.qty, total_picked: o.picked_qty || 0,
-            order_ids: new Set([o.order_id]), orders: [o] 
+            qty: o.qty, 
+            total_picked: o.picked_qty || 0,
+            order_ids: new Set([o.order_id]), 
+            orders: [o] 
         });
       } else {
         const existing = map.get(key);
@@ -133,6 +139,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         existing.total_picked += (o.picked_qty || 0);
         existing.order_ids.add(o.order_id);
         existing.orders.push(o);
+        existing.akts.add(o.akt); // Yangi AKT raqamini qo'shish
       }
     });
     
@@ -218,8 +225,9 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
               <thead>
                 <tr>
                   <th>Buyurtma ID</th>
+                  <th>AKT</th>
                   <th>Sotuvchi Kodi / SKU</th>
-                  <th style={{ width: '40%' }}>Mahsulot nomi</th>
+                  <th style={{ width: '35%' }}>Mahsulot nomi</th>
                   <th style={{ textAlign: 'right' }}>Holat</th>
                 </tr>
               </thead>
@@ -233,8 +241,17 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                   
                   return (
                     <tr key={i} className={isDone ? 'done-row' : ''}>
-                      <td data-label="ID" className="font-medium" style={{ color: "var(--text-muted)", fontSize: "0.85rem", verticalAlign: 'top' }}>
+                      <td data-label="Buyurtmalar" className="font-medium" style={{ color: "var(--text-muted)", fontSize: "0.85rem", verticalAlign: 'top' }}>
                         {idDisplay}
+                      </td>
+                      <td data-label="AKT" style={{ verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {Array.from(g.akts).map((akt: any) => (
+                            <span key={akt} style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
+                              {akt}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td data-label="KOD" style={{ verticalAlign: 'top' }}>
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
@@ -378,6 +395,41 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
         .counter-btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .counter-btn:active:not(:disabled) { transform: scale(0.95); }
         .counter-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+
+        @media (max-width: 768px) {
+          .details-container { padding: 1rem; }
+          .order-table, .order-table thead, .order-table tbody, .order-table th, .order-table td, .order-table tr { 
+            display: block; 
+          }
+          .order-table thead tr { 
+            position: absolute; top: -9999px; left: -9999px; 
+          }
+          .order-table tr { 
+            margin-bottom: 1.5rem; border: 1px solid #e2e8f0; border-radius: 12px; background: white; padding: 1rem; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+          }
+          .order-table td { 
+            border: none; border-bottom: 1px solid #f1f5f9; position: relative; padding-left: 50% !important; 
+            text-align: right !important; min-height: 48px; display: flex; align-items: center; justify-content: flex-end;
+          }
+          .order-table td:last-child { border-bottom: 0; }
+          .order-table td:before { 
+            content: attr(data-label); position: absolute; left: 1rem; width: 45%; padding-right: 10px; 
+            white-space: nowrap; text-align: left; font-weight: 700; color: var(--text-muted); font-size: 0.75rem; 
+            text-transform: uppercase;
+          }
+          .order-table td[data-label="KOD"] { 
+            padding-left: 1rem !important; flex-direction: column; align-items: flex-start; text-align: left !important;
+            padding-top: 2rem;
+          }
+          .order-table td[data-label="KOD"]:before { top: 0.75rem; }
+          .order-table td[data-label="NOMI"] {
+            padding-left: 1rem !important; flex-direction: column; align-items: flex-start; text-align: left !important;
+            padding-top: 2rem;
+          }
+          .order-table td[data-label="NOMI"]:before { top: 0.75rem; }
+          .picker-cell { justify-content: flex-end; }
+        }
       `}</style>
     </div>
   );
