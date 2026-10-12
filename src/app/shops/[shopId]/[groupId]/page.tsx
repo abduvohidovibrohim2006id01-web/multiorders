@@ -20,6 +20,17 @@ interface Order {
   image_url?: string;
 }
 
+function formatImageUrl(url?: string | null): string {
+  if (!url || url === '-' || url.trim() === '') return '';
+  const trimmed = url.trim();
+  // Faqat Uzum havolalari uchun /original qo'shiladi
+  if (trimmed.includes('uzum.uz')) {
+    return trimmed.includes('/original') ? trimmed : `${trimmed.replace(/\/$/, '')}/original`;
+  }
+  // Yandex va boshqa havolalar o'zining asl ko'rinishida ochiladi
+  return trimmed;
+}
+
 export default function OrderDetailsPage({ params, searchParams }: { params: Promise<{ shopId: string, groupId: string }>, searchParams: Promise<{ type: string }> }) {
   const router = useRouter();
   const resolvedParams = use(params);
@@ -257,7 +268,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                           {(g.image_url && g.image_url !== '-') && (
                             <img 
-                              src={g.image_url.includes('/original') ? g.image_url : `${g.image_url.replace(/\/$/, '')}/original`} 
+                              src={formatImageUrl(g.image_url)} 
                               alt={g.sku} 
                               onClick={() => setSelectedImg(g.image_url)}
                               style={{ 
@@ -314,7 +325,7 @@ export default function OrderDetailsPage({ params, searchParams }: { params: Pro
           <div className="img-modal-content" onClick={e => e.stopPropagation()}>
             <button className="img-modal-close" onClick={() => setSelectedImg(null)}>&times;</button>
             <img 
-              src={selectedImg.includes('/original') ? selectedImg : `${selectedImg.replace(/\/$/, '')}/original`} 
+              src={formatImageUrl(selectedImg)} 
               alt="Preview" 
             />
           </div>
